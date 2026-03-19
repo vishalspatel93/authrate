@@ -5,6 +5,8 @@ import { useFilters } from '@/hooks/useFilters';
 import { useAggregatedData } from '@/hooks/useAggregatedData';
 import { useInsights } from '@/hooks/useInsights';
 import { computeBreakdown } from '@/data/aggregations';
+import { DEMO_MODE } from '@/config';
+import { STATIC_INSIGHTS } from '@/data/staticInsights';
 
 import Header from '@/components/layout/Header';
 import FilterBar from '@/components/filters/FilterBar';
@@ -39,7 +41,8 @@ export default function App() {
   const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
 
   const { filters, setFilter, applyDimensionFilter, clearFilter, clearAllFilters, activeFilterCount } = useFilters();
-  const { insights, loading: insightsLoading, error: insightsError, fetchInsights } = useInsights();
+  const { insights: liveInsights, loading: insightsLoading, error: insightsError, fetchInsights } = useInsights();
+  const insights = DEMO_MODE ? STATIC_INSIGHTS : liveInsights;
 
   const {
     filtered,
@@ -201,15 +204,13 @@ export default function App() {
           </div>
         )}
 
-        {/* Decline Code Chart */}
-        <div style={{ height: 300 }} className="flex flex-col">
-          <DeclineCodeChart
-            data={declineCodes}
-            activeDeclineCodes={filters.declineCode}
-            onBarClick={handleDeclineCodeClick}
-            loading={isGenerating}
-          />
-        </div>
+        {/* Decline Code Chart — self-sizing based on row count */}
+        <DeclineCodeChart
+          data={declineCodes}
+          activeDeclineCodes={filters.declineCode}
+          onBarClick={handleDeclineCodeClick}
+          loading={isGenerating}
+        />
       </div>
 
       {/* Overlays */}

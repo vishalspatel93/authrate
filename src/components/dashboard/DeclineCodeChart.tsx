@@ -10,6 +10,10 @@ interface DeclineCodeChartProps {
   loading?: boolean;
 }
 
+const BAR_HEIGHT = 30;
+const CHART_HEADER_H = 52;
+const CHART_PADDING = 32; // top + bottom margin inside chart
+
 const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null;
   const d = payload[0].payload as DeclineCodeData;
@@ -38,8 +42,11 @@ export default function DeclineCodeChart({ data, activeDeclineCodes, onBarClick,
     displayName: `${d.code} — ${d.name}`,
   }));
 
+  // Compute explicit chart height so ResponsiveContainer has a real pixel value
+  const chartHeight = displayData.length * BAR_HEIGHT + CHART_PADDING;
+
   return (
-    <div className="chart-container mx-4 mb-3 p-4 flex flex-col" style={{ minHeight: 0 }}>
+    <div className="chart-container mx-4 mb-3 p-4 flex flex-col">
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <span className="text-sm font-semibold text-white">Decline Code Distribution</span>
         <div className="flex items-center gap-3">
@@ -59,54 +66,58 @@ export default function DeclineCodeChart({ data, activeDeclineCodes, onBarClick,
       </div>
 
       {loading ? (
-        <div className="flex-1 skeleton rounded" />
+        <div className="skeleton rounded" style={{ height: chartHeight }} />
       ) : data.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-gray-600 text-xs">No declined transactions in selection</div>
+        <div className="flex items-center justify-center text-gray-600 text-xs" style={{ height: 80 }}>
+          No declined transactions in selection
+        </div>
       ) : (
-        <div className="flex-1 min-h-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              layout="vertical"
-              margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
-              onClick={(e) => {
-                if (e?.activePayload?.[0]?.payload?.code) {
-                  onBarClick(e.activePayload[0].payload.code);
-                }
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 4, right: 60, left: 0, bottom: 4 }}
+            onClick={(e) => {
+              if (e?.activePayload?.[0]?.payload?.code) {
+                onBarClick(e.activePayload[0].payload.code);
+              }
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" horizontal={false} />
+            <XAxis
+              type="number"
+              tick={{ fill: '#6B7280', fontSize: 10 }}
+              tickFormatter={(v) => formatNumber(v)}
+            />
+            <YAxis
+              type="category"
+              dataKey="displayName"
+              width={148}
+              tick={{ fill: '#9CA3AF', fontSize: 10 }}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+            <Bar
+              dataKey="count"
+              radius={[0, 3, 3, 0]}
+              cursor="pointer"
+              label={{
+                position: 'right',
+                fill: '#6B7280',
+                fontSize: 10,
+                formatter: (_v: number, entry: any) => formatPercent(entry?.payload?.percentage ?? 0, 1),
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" horizontal={false} />
-              <XAxis type="number" tick={{ fill: '#6B7280', fontSize: 10 }} />
-              <YAxis
-                type="category"
-                dataKey="displayName"
-                width={140}
-                tick={{ fill: '#9CA3AF', fontSize: 10 }}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-              <Bar
-                dataKey="count"
-                radius={[0, 3, 3, 0]}
-                cursor="pointer"
-                label={{
-                  position: 'right',
-                  fill: '#6B7280',
-                  fontSize: 10,
-                  formatter: (v: number, entry: any) => formatPercent(entry?.payload?.percentage ?? 0, 1),
-                }}
-              >
-                {chartData.map((entry, i) => (
-                  <Cell
-                    key={`cell-${i}`}
-                    fill={entry.category === 'soft' ? '#3B82F6' : '#EF4444'}
-                    opacity={activeDeclineCodes.includes(entry.code) ? 1 : activeDeclineCodes.length > 0 ? 0.4 : 0.75}
-                    style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+              {chartData.map((entry, i) => (
+                <Cell
+                  key={`cell-${i}`}
+                  fill={entry.category === 'soft' ? '#3B82F6' : '#EF4444'}
+                  opacity={activeDeclineCodes.includes(entry.code) ? 1 : activeDeclineCodes.length > 0 ? 0.4 : 0.75}
+                  style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       )}
     </div>
   );

@@ -99,7 +99,7 @@ export default function BreakdownChart({
               <XAxis
                 type="number"
                 domain={[Math.max(0, Math.min(...data.map((d) => d.authRate)) - 5), 100]}
-                tickFormatter={(v) => `${v}%`}
+                tickFormatter={(v) => `${Math.round(v)}%`}
                 tick={{ fill: '#6B7280', fontSize: 10 }}
               />
               <YAxis
